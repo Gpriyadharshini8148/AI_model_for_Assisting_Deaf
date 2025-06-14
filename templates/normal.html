@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Normal User Interface</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            width: 100vw;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h2 {
+            margin-top: 20px;
+            font-size: 2.2rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        .text-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            padding: 30px;
+            border-radius: 16px;
+            margin: 20px 0;
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            animation: fadeInUp 1.5s ease-in-out;
+        }
+
+        button {
+            background: linear-gradient(90deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 12px 24px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background: linear-gradient(90deg, #16325c, #1e3c72);
+            transform: scale(1.05);
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            color: #f0f0f0;
+        }
+
+        strong {
+            color: #ffd700;
+        }
+
+        hr {
+            margin: 20px 0;
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ffffff44, transparent);
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <h2>🧑‍💬 Normal Person Interface (Tamil Speech)</h2>
+
+    <div class="text-container">
+        <button onclick="startRecognition()">🎤 Speak in Tamil</button>
+
+        <p><strong>Recognized Tamil:</strong> <span id="tamil_text">Waiting...</span></p>
+        <p><strong>English Translation (for Deaf):</strong> <span id="normal_text">Waiting...</span></p>
+
+        <hr>
+
+        <p><strong>Deaf Spoke (Translated Tamil):</strong> <span id="deaf_speech">Waiting...</span></p>
+    </div>
+
+    <script>
+        async function sendNormalSpeech(tamilText) {
+            try {
+                const res = await fetch('/normal_reply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: tamilText })
+                });
+                const data = await res.json();
+                document.getElementById("normal_text").textContent = data.translated_text;
+            } catch (error) {
+                console.error("Error sending normal speech:", error);
+            }
+        }
+
+        function startRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Speech recognition not supported. Use Google Chrome.");
+                return;
+            }
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'ta-IN';
+            recognition.interimResults = false;
+            recognition.continuous = false;
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById("tamil_text").textContent = transcript;
+                sendNormalSpeech(transcript);
+            };
+
+            recognition.start();
+        }
+
+        async function fetchDeafSpeech() {
+            try {
+                const res = await fetch('/get_deaf_to_normal');
+                const data = await res.json();
+                document.getElementById("deaf_speech").textContent = data.translated_text || "Waiting...";
+            } catch (error) {
+                console.error("Error fetching deaf speech:", error);
+            }
+        }
+
+        setInterval(fetchDeafSpeech, 2000);
+    </script>
+</body>
+</html>
