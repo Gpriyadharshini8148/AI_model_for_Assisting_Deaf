@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Normal User Interface</title>
     <style>
+        /* Existing styles unchanged */
         * {
             box-sizing: border-box;
         }
@@ -96,6 +97,10 @@
             0% { opacity: 0; transform: translateY(30px); }
             100% { opacity: 1; transform: translateY(0); }
         }
+
+        audio {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -110,9 +115,12 @@
         <hr>
 
         <p><strong>Deaf Spoke (Translated Tamil):</strong> <span id="deaf_speech">Waiting...</span></p>
+        <audio id="deaf_audio" controls autoplay></audio>
     </div>
 
     <script>
+        let lastDeafTimestamp = 0;
+
         async function sendNormalSpeech(tamilText) {
             try {
                 const res = await fetch('/normal_reply', {
@@ -151,7 +159,16 @@
             try {
                 const res = await fetch('/get_deaf_to_normal');
                 const data = await res.json();
-                document.getElementById("deaf_speech").textContent = data.translated_text || "Waiting...";
+                
+                const translatedText = data.translated_text || "Waiting...";
+                document.getElementById("deaf_speech").textContent = translatedText;
+
+                const audioElement = document.getElementById("deaf_audio");
+                if (data.audio_url && data.timestamp !== lastDeafTimestamp) {
+                    audioElement.src = data.audio_url;
+                    audioElement.play();
+                    lastDeafTimestamp = data.timestamp;
+                }
             } catch (error) {
                 console.error("Error fetching deaf speech:", error);
             }
